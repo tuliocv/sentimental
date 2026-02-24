@@ -21,7 +21,7 @@ LEVELS = [
     ("🛸 Recruta", "Primeiro contato — tudo novo"),
     ("👽 Explorador", "Curioso(a), mas ainda confuso(a)"),
     ("🧑‍🚀 Navegador", "Estou acompanhando com pequenos ajustes"),
-    ("🤖 Construtor", "Consigo praticar e resolver exercícios"),
+    ("🔨 Construtor", "Consigo praticar e resolver exercícios"),
     ("🚀 Comandante", "Estou voando alto hoje"),
 ]
 
