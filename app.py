@@ -218,7 +218,7 @@ else:
     with st.form("checkin_form", border=True):
         st.subheader("1) Qual seu nível hoje?")
         level_labels = [x[0] for x in LEVELS]
-        level_chosen = st.radio("Escolha 1 nível:", level_labels, horizontal=True)
+        level_chosen = st.radio("Escolha 1 nível:", level_labels, horizontal=False)
         level_detail = dict(LEVELS).get(level_chosen, "")
 
         st.subheader("2) Como você está se sentindo?")
