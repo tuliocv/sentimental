@@ -77,7 +77,7 @@ def require_admin():
 # UI
 # =========================
 st.title("📍 Check-in da Aula")
-st.write("Responda rapidinho para o professor ajustar a aula de hoje.")
+st.write("Responda rapidinho para o professor ajustar a aula de hoje. 👽")
 
 tab_aluno, tab_admin = st.tabs(["👩‍🎓 Check-in (Aluno)", "📊 Painel (Admin)"])
 
@@ -97,7 +97,7 @@ with tab_aluno:
 
         comment = st.text_area(
             "Comentário (opcional):",
-            placeholder="Ex.: 'Tive dificuldade com Scanner' ou 'preciso de mais exemplos de variáveis'.",
+            placeholder="Ex.: 'Tive dificuldade em iniciar o código.' ou 'preciso de mais exercícios.'.",
             max_chars=200,
         )
 
