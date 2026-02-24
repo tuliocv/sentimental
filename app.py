@@ -127,7 +127,7 @@ def admin_panel(df: pd.DataFrame):
         "🛸 Recruta": 0,
         "👽 Explorador": 1,
         "🧑‍🚀 Navegador": 2,
-        "🤖 Construtor": 3,
+        "🔨 Construtor": 3,
         "🚀 Comandante": 4,
     }
     feeling_score = {
