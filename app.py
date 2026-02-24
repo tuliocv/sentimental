@@ -87,16 +87,14 @@ def admin_panel(df: pd.DataFrame):
         st.info("Ainda não há respostas.")
         return
 
-    # filtro por turma
     dff = df.copy()
     dff["turma"] = dff["turma"].replace("", "(Sem turma)")
+
     turmas = ["(Todas)"] + sorted(dff["turma"].unique().tolist())
     turma_sel = st.selectbox("Filtrar por turma:", turmas, key="turma_filter")
-
     if turma_sel != "(Todas)":
         dff = dff[dff["turma"] == turma_sel]
 
-    # gráficos
     st.markdown("### 📊 Distribuição de sentimentos")
     order = [x[0] for x in FEELINGS]
     counts = dff["feeling"].value_counts().reindex(order).fillna(0).astype(int)
@@ -123,8 +121,11 @@ def admin_panel(df: pd.DataFrame):
     if len(comments) == 0:
         st.caption("Sem comentários ainda.")
     else:
-        st.dataframe(comments.sort_values("timestamp", ascending=False),
-                     use_container_width=True, hide_index=True)
+        st.dataframe(
+            comments.sort_values("timestamp", ascending=False),
+            use_container_width=True,
+            hide_index=True,
+        )
 
     st.divider()
 
@@ -157,37 +158,8 @@ st.write("Responda rapidinho para o professor ajustar a aula de hoje. 👽")
 # Admin na lateral esquerda
 admin_ok = require_admin_sidebar()
 
-# Conteúdo principal: aluno sempre vê o check-in.
-with st.form("checkin_form", border=True):
-    st.subheader("Como você está se sentindo hoje?")
-    turma = st.text_input("Turma (opcional)", placeholder="Ex.: 1º semestre A / Noite")
-
-    labels = [x[0] for x in FEELINGS]
-    chosen = st.radio("Escolha 1 opção:", labels, horizontal=False)
-
-    detail = dict(FEELINGS).get(chosen, "")
-
-    comment = st.text_area(
-        "Comentário (opcional):",
-        placeholder="Ex.: 'Tive dificuldade em iniciar o código.' ou 'preciso de mais exemplos.'.",
-        max_chars=200,
-    )
-
-    sent = st.form_submit_button("✅ Enviar check-in")
-
-if sent:
-    append_row({
-        "timestamp": now_iso(),
-        "feeling": chosen,
-        "detail": detail,
-        "comment": (comment or "").strip(),
-        "turma": (turma or "").strip(),
-    })
-    st.success("Obrigado! Check-in registrado. ✅")
-
-# Painel do admin aparece no corpo (main) apenas se logado
+# ======= MODO ADMIN: NÃO MOSTRA FORM DO ALUNO =======
 if admin_ok:
-    st.divider()
     df = load_df()
     admin_panel(df)
 
@@ -195,5 +167,36 @@ if admin_ok:
     if st.button("Sair do admin"):
         st.session_state["admin_ok"] = False
         st.rerun()
+
+# ======= MODO ALUNO: SÓ MOSTRA O CHECK-IN =======
 else:
+    with st.form("checkin_form", border=True):
+        st.subheader("Como você está se sentindo hoje?")
+        turma = st.text_input("Turma (opcional)", placeholder="Ex.: 1º semestre A / Noite")
+
+        labels = [x[0] for x in FEELINGS]
+        chosen = st.radio("Escolha 1 opção:", labels, horizontal=False)
+
+        detail = dict(FEELINGS).get(chosen, "")
+
+        comment = st.text_area(
+            "Comentário (opcional):",
+            placeholder="Ex.: 'Tive dificuldade em iniciar o código.' ou 'preciso de mais exemplos.'.",
+            max_chars=200,
+        )
+
+        sent = st.form_submit_button("✅ Enviar check-in")
+
+    if sent:
+        append_row(
+            {
+                "timestamp": now_iso(),
+                "feeling": chosen,
+                "detail": detail,
+                "comment": (comment or "").strip(),
+                "turma": (turma or "").strip(),
+            }
+        )
+        st.success("Obrigado! Check-in registrado. ✅")
+
     st.caption("99% dos problemas em programação são culpa do ponto e vírgula. O outro 1% é falta dele.")
