@@ -184,11 +184,6 @@ def admin_panel(df: pd.DataFrame):
 # Mini visual do ET (sem imagem externa)
 # =========================
 ET_MINI = r'''
-<pre style="font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas;
-            line-height: 1.2; margin: 0; font-size: 16px;">
-    👽
-   
-</pre>
 '''
 
 # =========================
