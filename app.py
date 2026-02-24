@@ -220,17 +220,19 @@ else:
         level_labels = [x[0] for x in LEVELS]
         level_chosen = st.radio("Escolha 1 nível:", level_labels, horizontal=False)
         level_detail = dict(LEVELS).get(level_chosen, "")
+        st.caption(f"📌 {level_detail}")
 
         st.subheader("2) Como você está se sentindo?")
-        turma = st.text_input("Turma (opcional)", placeholder="Ex.: 1º semestre A / Noite")
+        turma = st.text_input("Turma (opcional)", placeholder="Ex.: 1º semestre")
 
         feeling_labels = [x[0] for x in FEELINGS]
         feeling_chosen = st.radio("Escolha 1 opção:", feeling_labels, horizontal=False)
         feeling_detail = dict(FEELINGS).get(feeling_chosen, "")
+        st.caption(f"💬 {feeling_detail}")
 
         comment = st.text_area(
             "Comentário (opcional):",
-            placeholder="Ex.: 'me perdi no Scanner' ou 'quero mais exemplos de variáveis'.",
+            placeholder="Ex.: 'me perdi na declaração de variáveis' ou 'quero mais exemplos de variáveis'.",
             max_chars=200,
         )
 
@@ -248,6 +250,6 @@ else:
                 "turma": (turma or "").strip(),
             }
         )
-        st.success("Check-in registrado! 🚀 Obrigado por ajudar a ajustar a aula.")
+        st.success("Check-in registrado! 🚀 Obrigado por ajudar!")
 
     st.caption("Não é bug, é funcionalidade não documentada. 👽")
