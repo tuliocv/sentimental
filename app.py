@@ -16,7 +16,6 @@ RESP_PATH = os.path.join(DATA_DIR, "checkin_respostas.csv")
 if not os.path.exists(DATA_DIR):
     os.makedirs(DATA_DIR)
 
-# Sistema de níveis (tema)
 LEVELS = [
     ("🛸 Recruta", "Primeiro contato — tudo novo"),
     ("👽 Explorador", "Curioso(a), mas ainda confuso(a)"),
@@ -25,7 +24,6 @@ LEVELS = [
     ("🚀 Comandante", "Estou voando alto hoje"),
 ]
 
-# Sentimentos (inclui ET Explorador)
 FEELINGS = [
     ("🚀 Empolgado(a)", "Alta energia / motivação"),
     ("🙂 Tranquilo(a)", "Ok para acompanhar"),
@@ -35,6 +33,119 @@ FEELINGS = [
     ("😣 Ansioso(a)", "Estou travado(a) / preocupado(a)"),
     ("😴 Cansado(a)", "Baixa energia hoje"),
 ]
+
+# =========================
+# ETs + clima
+# =========================
+ET_FELIZ = r"""
+<pre style="text-align:center; font-size:16px; margin:0;">
+    👽✨
+    /|\
+    / \
+</pre>
+"""
+ET_PREOCUPADO = r"""
+<pre style="text-align:center; font-size:16px; margin:0;">
+    👽💭
+    /|\
+    / \
+</pre>
+"""
+ET_CANSADO = r"""
+<pre style="text-align:center; font-size:16px; margin:0;">
+    👽😴
+    /|\
+    / \
+</pre>
+"""
+ET_NEUTRO = r"""
+<pre style="text-align:center; font-size:16px; margin:0;">
+    👽
+    /|\
+    / \
+</pre>
+"""
+
+def climate_summary(df: pd.DataFrame):
+    """
+    Retorna (clima, et_visual, mensagem, tipo_alerta)
+    tipo_alerta ∈ {"success","info","warning","error"}
+    """
+    if df is None or len(df) == 0:
+        return (
+            "sem_dados",
+            ET_NEUTRO,
+            "Ainda não há check-ins. Assim que chegarem respostas, o termômetro da turma aparece aqui 👽",
+            "info",
+        )
+
+    counts = df["feeling"].value_counts()
+
+    positivos = counts.get("🚀 Empolgado(a)", 0) + counts.get("🙂 Tranquilo(a)", 0)
+    neutros = counts.get("😐 Neutro(a)", 0)
+    confusos = (
+        counts.get("👽 ET Explorador", 0)
+        + counts.get("😕 Confuso(a)", 0)
+        + counts.get("😣 Ansioso(a)", 0)
+    )
+    cansados = counts.get("😴 Cansado(a)", 0)
+
+    total = int(positivos + neutros + confusos + cansados)
+    if total == 0:
+        return ("sem_dados", ET_NEUTRO, "Ainda não há check-ins válidos 👽", "info")
+
+    p_pos = positivos / total
+    p_neu = neutros / total
+    p_con = confusos / total
+    p_can = cansados / total
+
+    if p_pos >= 0.50:
+        return (
+            "positivo",
+            ET_FELIZ,
+            "🚀 Clima bom! A turma está pronta para avançar. Sugestão: manter o ritmo e propor um mini-desafio final.",
+            "success",
+        )
+
+    # crítico: confusão alta + ansiedade relevante
+    if p_con >= 0.45 and counts.get("😣 Ansioso(a)", 0) >= max(1, int(total * 0.15)):
+        return (
+            "critico",
+            ET_PREOCUPADO,
+            "🛑 Clima de alerta: há bastante confusão/ansiedade. Sugestão: desacelerar, fazer 1 exemplo ao vivo passo a passo e checar entendimento.",
+            "error",
+        )
+
+    if p_con >= 0.45:
+        return (
+            "confuso",
+            ET_PREOCUPADO,
+            "👽 Muitos ETs exploradores hoje. Sugestão: reforçar o modelo mental (Entrada → Processamento → Saída) e resolver 1 exercício guiado antes da lista.",
+            "warning",
+        )
+
+    if p_can >= 0.35:
+        return (
+            "cansado",
+            ET_CANSADO,
+            "😴 Turma com baixa energia. Sugestão: atividade curta em duplas, com metas pequenas e feedback rápido.",
+            "warning",
+        )
+
+    if p_neu >= 0.40:
+        return (
+            "neutro",
+            ET_NEUTRO,
+            "😐 Clima neutro. Sugestão: aquecer com um exercício simples (2–3 min) e depois seguir com prática guiada.",
+            "info",
+        )
+
+    return (
+        "misto",
+        ET_NEUTRO,
+        "👽 Clima misto. Sugestão: começar com exemplo curto e abrir 2 minutos para dúvidas antes do próximo exercício.",
+        "info",
+    )
 
 # =========================
 # Helpers
@@ -86,11 +197,24 @@ def require_admin_sidebar() -> bool:
 def admin_panel(df: pd.DataFrame):
     st.subheader("📊 Painel do Admin — Missão Java")
 
+    clima, et_visual, msg, kind = climate_summary(df)
+    st.markdown(et_visual, unsafe_allow_html=True)
+    if kind == "success":
+        st.success(msg)
+    elif kind == "warning":
+        st.warning(msg)
+    elif kind == "error":
+        st.error(msg)
+    else:
+        st.info(msg)
+
     col1, col2, col3 = st.columns(3)
     with col1:
         st.metric("Respostas", len(df))
     with col2:
-        st.metric("Turmas (distintas)", df["turma"].replace("", pd.NA).dropna().nunique())
+        # normaliza turma aqui também
+        turma_norm = df["turma"].fillna("").astype(str).str.strip().replace("", pd.NA)
+        st.metric("Turmas (distintas)", turma_norm.dropna().nunique())
     with col3:
         st.metric("Última resposta", str(df["timestamp"].iloc[-1]) if len(df) else "-")
 
@@ -99,26 +223,31 @@ def admin_panel(df: pd.DataFrame):
         return
 
     dff = df.copy()
-    dff["turma"] = dff["turma"].replace("", "(Sem turma)")
+
+    # ✅ CORREÇÃO DO TypeError: garante string e remove NaN antes de ordenar
+    dff["turma"] = (
+        dff["turma"]
+        .fillna("")
+        .astype(str)
+        .str.strip()
+        .replace("", "(Sem turma)")
+    )
 
     turmas = ["(Todas)"] + sorted(dff["turma"].unique().tolist())
     turma_sel = st.selectbox("Filtrar por turma:", turmas, key="turma_filter")
     if turma_sel != "(Todas)":
         dff = dff[dff["turma"] == turma_sel]
 
-    # Gráfico de níveis
     st.markdown("### 🧑‍🚀 Nível da tripulação (autoavaliação)")
     level_order = [x[0] for x in LEVELS]
     level_counts = dff["level"].value_counts().reindex(level_order).fillna(0).astype(int)
     st.bar_chart(level_counts)
 
-    # Gráfico de sentimentos
     st.markdown("### 📊 Como a turma está se sentindo")
     feeling_order = [x[0] for x in FEELINGS]
     feeling_counts = dff["feeling"].value_counts().reindex(feeling_order).fillna(0).astype(int)
     st.bar_chart(feeling_counts)
 
-    # Evolução (score combinado simples)
     st.markdown("### 🕒 Tendência (por ordem de envio)")
     timeline = dff[["timestamp", "level", "feeling"]].copy()
     timeline["n"] = range(1, len(timeline) + 1)
@@ -147,7 +276,6 @@ def admin_panel(df: pd.DataFrame):
     timeline = timeline.set_index("n")
     st.line_chart(timeline["score"])
 
-    # Comentários
     st.markdown("### 💬 Sinais do espaço (comentários)")
     comments = dff[dff["comment"].astype(str).str.strip() != ""][["timestamp", "level", "feeling", "comment", "turma"]]
     if len(comments) == 0:
@@ -181,9 +309,15 @@ def admin_panel(df: pd.DataFrame):
                 st.rerun()
 
 # =========================
-# Mini visual do ET (sem imagem externa)
+# Mini ET (lado aluno)
 # =========================
 ET_MINI = r'''
+<pre style="font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas;
+            line-height: 1.1; margin: 0; font-size: 16px; text-align: center;">
+      👽
+     /|\
+     / \
+</pre>
 '''
 
 # =========================
@@ -192,10 +326,9 @@ ET_MINI = r'''
 st.markdown("## 👽 Missão Java — Check-in da Tripulação")
 st.caption("Um check-in rápido para o professor ajustar a aula em tempo real.")
 
-# Admin na lateral esquerda
 admin_ok = require_admin_sidebar()
 
-# ======= MODO ADMIN: NÃO MOSTRA FORM DO ALUNO =======
+# ======= MODO ADMIN =======
 if admin_ok:
     df = load_df()
     admin_panel(df)
@@ -205,9 +338,8 @@ if admin_ok:
         st.session_state["admin_ok"] = False
         st.rerun()
 
-# ======= MODO ALUNO: SÓ MOSTRA O CHECK-IN =======
+# ======= MODO ALUNO (sem st.form para descrições atualizarem em tempo real) =======
 else:
-    # Cabeçalho temático
     cA, cB = st.columns([2, 1], vertical_alignment="center")
     with cA:
         st.write("### Status da tripulação")
@@ -215,28 +347,28 @@ else:
     with cB:
         st.markdown(ET_MINI, unsafe_allow_html=True)
 
-    with st.form("checkin_form", border=True):
-        st.subheader("1) Qual seu nível hoje?")
-        level_labels = [x[0] for x in LEVELS]
-        level_chosen = st.radio("Escolha 1 nível:", level_labels, horizontal=False)
-        level_detail = dict(LEVELS).get(level_chosen, "")
-       
+    st.subheader("1) Qual seu nível hoje?")
+    level_labels = [x[0] for x in LEVELS]
+    level_chosen = st.radio("Escolha 1 nível:", level_labels, horizontal=False, key="level_choice")
+    level_detail = dict(LEVELS).get(level_chosen, "")
+    st.caption(f"📌 {level_detail}")
 
-        st.subheader("2) Como você está se sentindo?")
-        turma = st.text_input("Turma (opcional)", placeholder="Ex.: 1º semestre")
+    st.subheader("2) Como você está se sentindo?")
+    turma = st.text_input("Turma (opcional)", placeholder="Ex.: 1º semestre", key="turma_txt")
 
-        feeling_labels = [x[0] for x in FEELINGS]
-        feeling_chosen = st.radio("Escolha 1 opção:", feeling_labels, horizontal=False)
-        feeling_detail = dict(FEELINGS).get(feeling_chosen, "")
-        
+    feeling_labels = [x[0] for x in FEELINGS]
+    feeling_chosen = st.radio("Escolha 1 opção:", feeling_labels, horizontal=False, key="feeling_choice")
+    feeling_detail = dict(FEELINGS).get(feeling_chosen, "")
+    st.caption(f"💬 {feeling_detail}")
 
-        comment = st.text_area(
-            "Comentário (opcional):",
-            placeholder="Ex.: 'me perdi na declaração de variáveis' ou 'quero mais exemplos de variáveis'.",
-            max_chars=200,
-        )
+    comment = st.text_area(
+        "Comentário (opcional):",
+        placeholder="Ex.: 'me perdi na declaração de variáveis' ou 'quero mais exemplos de variáveis'.",
+        max_chars=200,
+        key="comment_txt",
+    )
 
-        sent = st.form_submit_button("✅ Enviar check-in")
+    sent = st.button("✅ Enviar check-in", type="primary", use_container_width=True)
 
     if sent:
         append_row(
@@ -252,4 +384,4 @@ else:
         )
         st.success("Check-in registrado! 🚀 Obrigado por ajudar!")
 
-    st.caption("Não é bug, é funcionalidade não documentada. 👽")
+    st.caption("99% dos problemas em programação são culpa do ponto e vírgula. O outro 1% é falta dele. 👽")
