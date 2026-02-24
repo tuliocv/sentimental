@@ -210,7 +210,7 @@ else:
     # Cabeçalho temático
     cA, cB = st.columns([2, 1], vertical_alignment="center")
     with cA:
-        st.write("### Status da tripulação (30 segundos)")
+        st.write("### Status da tripulação")
         st.write("Marque seu **nível** e como você está se sentindo hoje. Isso ajuda a deixar a aula mais assertiva.")
     with cB:
         st.markdown(ET_MINI, unsafe_allow_html=True)
