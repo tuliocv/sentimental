@@ -196,4 +196,4 @@ if admin_ok:
         st.session_state["admin_ok"] = False
         st.rerun()
 else:
-    st.caption("🔒 Painel do admin disponível na barra lateral (esquerda).")
+    st.caption("99% dos problemas em programação são culpa do ponto e vírgula. O outro 1% é falta dele.")
