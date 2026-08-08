@@ -307,8 +307,6 @@ ET_MINI = r'''
 <pre style="font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas;
             line-height: 1.1; margin: 0; font-size: 16px; text-align: center;">
       👽
-     /|\
-     / \
 </pre>
 '''
 
