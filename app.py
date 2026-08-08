@@ -5,7 +5,7 @@ from datetime import datetime
 import pandas as pd
 import streamlit as st
 
-st.set_page_config(page_title="Missão Java — Check-in", layout="centered")
+st.set_page_config(page_title="Check-in", layout="centered")
 
 # =========================
 # Config
@@ -195,7 +195,7 @@ def require_admin_sidebar() -> bool:
     return False
 
 def admin_panel(df: pd.DataFrame):
-    st.subheader("📊 Painel do Admin — Missão Java")
+    st.subheader("📊 Painel do Admin")
 
     clima, et_visual, msg, kind = climate_summary(df)
     st.markdown(et_visual, unsafe_allow_html=True)
@@ -323,8 +323,8 @@ ET_MINI = r'''
 # =========================
 # UI
 # =========================
-st.markdown("## 👽 Missão Java — Check-in da Tripulação")
-st.caption("Um check-in rápido para o professor ajustar a aula em tempo real.")
+st.markdown("## 👽 Check-in da Tripulação")
+st.caption("Um check-in rápido para embarque da tripulação")
 
 admin_ok = require_admin_sidebar()
 
