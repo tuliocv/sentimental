@@ -40,29 +40,21 @@ FEELINGS = [
 ET_FELIZ = r"""
 <pre style="text-align:center; font-size:16px; margin:0;">
     👽✨
-    /|\
-    / \
 </pre>
 """
 ET_PREOCUPADO = r"""
 <pre style="text-align:center; font-size:16px; margin:0;">
     👽💭
-    /|\
-    / \
 </pre>
 """
 ET_CANSADO = r"""
 <pre style="text-align:center; font-size:16px; margin:0;">
     👽😴
-    /|\
-    / \
 </pre>
 """
 ET_NEUTRO = r"""
 <pre style="text-align:center; font-size:16px; margin:0;">
     👽
-    /|\
-    / \
 </pre>
 """
 
